@@ -1,0 +1,147 @@
+event start
+	&SDTLaberinto.FromJson('[{"PosicionX":0,"PosicionY":0,"Tipo":1},{"PosicionX":0,"PosicionY":1,"Tipo":1},{"PosicionX":0,"PosicionY":2,"Tipo":1},{"PosicionX":0,"PosicionY":3,"Tipo":1},{"PosicionX":0,"PosicionY":4,"Tipo":1},{"PosicionX":1,"PosicionY":0,"Tipo":1},{"PosicionX":1,"PosicionY":4,"Tipo":1},{"PosicionX":2,"PosicionY":0,"Tipo":1},{"PosicionX":2,"PosicionY":4,"Tipo":1},{"PosicionX":3,"PosicionY":0,"Tipo":1},{"PosicionX":3,"PosicionY":4,"Tipo":1},{"PosicionX":4,"PosicionY":0,"Tipo":1},{"PosicionX":4,"PosicionY":1,"Tipo":1},{"PosicionX":4,"PosicionY":2,"Tipo":1},{"PosicionX":4,"PosicionY":3,"Tipo":1},{"PosicionX":4,"PosicionY":4,"Tipo":1}]')
+endevent
+
+sub 'agregarCasillas'
+	&SDTLaberintoItem = new()
+	&SDTLaberintoItem.PosicionX = 1
+	&SDTLaberintoItem.PosicionY = 1
+	&SDTLaberintoItem.Tipo = &Posicion1
+	&SDTLaberinto.Add(&SDTLaberintoItem)
+	
+	&SDTLaberintoItem = new()
+	&SDTLaberintoItem.PosicionX = 1
+	&SDTLaberintoItem.PosicionY = 2
+	&SDTLaberintoItem.Tipo = &Posicion2
+	&SDTLaberinto.Add(&SDTLaberintoItem)
+	
+	&SDTLaberintoItem = new()
+	&SDTLaberintoItem.PosicionX = 1
+	&SDTLaberintoItem.PosicionY = 3
+	&SDTLaberintoItem.Tipo = &Posicion3
+	&SDTLaberinto.Add(&SDTLaberintoItem)
+	
+	&SDTLaberintoItem = new()
+	&SDTLaberintoItem.PosicionX = 2
+	&SDTLaberintoItem.PosicionY = 1
+	&SDTLaberintoItem.Tipo = &Posicion4
+	&SDTLaberinto.Add(&SDTLaberintoItem)
+	
+	&SDTLaberintoItem = new()
+	&SDTLaberintoItem.PosicionX = 2
+	&SDTLaberintoItem.PosicionY = 2
+	&SDTLaberintoItem.Tipo = &Posicion5
+	&SDTLaberinto.Add(&SDTLaberintoItem)
+	
+	&SDTLaberintoItem = new()
+	&SDTLaberintoItem.PosicionX = 2
+	&SDTLaberintoItem.PosicionY = 3
+	&SDTLaberintoItem.Tipo = &Posicion6
+	&SDTLaberinto.Add(&SDTLaberintoItem)
+	
+	&SDTLaberintoItem = new()
+	&SDTLaberintoItem.PosicionX = 3
+	&SDTLaberintoItem.PosicionY = 1
+	&SDTLaberintoItem.Tipo = &Posicion7
+	&SDTLaberinto.Add(&SDTLaberintoItem)
+	
+	&SDTLaberintoItem = new()
+	&SDTLaberintoItem.PosicionX = 3
+	&SDTLaberintoItem.PosicionY = 2
+	&SDTLaberintoItem.Tipo = &Posicion8
+	&SDTLaberinto.Add(&SDTLaberintoItem)
+	
+	&SDTLaberintoItem = new()
+	&SDTLaberintoItem.PosicionX = 3
+	&SDTLaberintoItem.PosicionY = 3
+	&SDTLaberintoItem.Tipo = &Posicion9
+	&SDTLaberinto.Add(&SDTLaberintoItem)
+endsub
+
+event 'buscarRuta'
+	do 'agregarCasillas'
+	msg(&SDTLaberinto.ToJson().ToString())
+	do 'buscarRuta'
+endevent
+
+sub 'buscarRuta'
+	for &SDTLaberintoItem in &SDTLaberinto
+		if &SDTLaberintoItem.Tipo = TipoPosicion.Inicio
+			&SDTLaberintoItemInicio.FromJson(&SDTLaberintoItem.ToJson().ToString())
+		endif
+		if &SDTLaberintoItem.Tipo = TipoPosicion.Final
+			&SDTLaberintoItemFinal.FromJson(&SDTLaberintoItem.ToJson().ToString())
+		endif
+	endfor
+	msg('El origen está establecido en (' + &SDTLaberintoItemInicio.PosicionX.ToString() + ',' + &SDTLaberintoItemInicio.PosicionY.ToString() + ')')
+	msg('El destino está establecido en (' + &SDTLaberintoItemFinal.PosicionX.ToString() + ',' + &SDTLaberintoItemFinal.PosicionY.ToString() + ')')
+	&Evaluados.Add(&SDTLaberintoItemInicio)
+	Do while &EvaluacionItem.PosicionX = &SDTLaberintoItemFinal.PosicionX and &EvaluacionItem.PosicionY = &SDTLaberintoItemFinal.PosicionY
+		for &i = 1 to &Evaluados.Count step 1
+			if &i = &Evaluados.Count
+				&EvaluacionItem.PosicionX = &Evaluados.Item(&i).PosicionX
+				&EvaluacionItem.PosicionY = &Evaluados.Item(&i).PosicionY
+				do 'EvaluarArriba'
+				if &ArribaEstado = false
+					do 'EvaluarAbajo'
+					if &AbajoEstado = false
+						do 'EvaluarIzquierda'
+						if &IzquierdaEstado = false
+							do 'EvaluarDerecha'
+							if &DerechaEstado = false
+								msg('SIN SOLUCIÓN')
+							endif
+						endif
+					endif
+				endif
+			endif
+		endfor
+	Enddo
+endsub
+
+sub 'EvaluarArriba'
+	&ArribaEstado = false
+	for &SDTLaberintoItem in &SDTLaberinto
+		if &SDTLaberintoItem.PosicionX = &EvaluacionItem.PosicionX - 1 and &SDTLaberintoItem.PosicionY = &EvaluacionItem.PosicionY
+			if &SDTLaberintoItem.Tipo = TipoPosicion.SinValor
+				&ArribaEstado = true
+			endif
+		endif
+	endfor
+endsub
+
+sub 'EvaluarAbajo'
+	&AbajoEstado = false
+	&ArribaEstado = false
+	for &SDTLaberintoItem in &SDTLaberinto
+		if &SDTLaberintoItem.PosicionX = &EvaluacionItem.PosicionX + 1 and &SDTLaberintoItem.PosicionY = &EvaluacionItem.PosicionY
+			if &SDTLaberintoItem.Tipo = TipoPosicion.SinValor
+				&AbajoEstado = true
+			endif
+		endif
+	endfor
+endsub
+
+sub 'EvaluarDerecha'
+	&DerechaEstado = false
+	&ArribaEstado = false
+	for &SDTLaberintoItem in &SDTLaberinto
+		if &SDTLaberintoItem.PosicionX = &EvaluacionItem.PosicionX and &SDTLaberintoItem.PosicionY = &EvaluacionItem.PosicionY + 1
+			if &SDTLaberintoItem.Tipo = TipoPosicion.SinValor
+				&DerechaEstado = true
+			endif
+		endif
+	endfor
+endsub
+
+sub 'EvaluarIzquierda'
+	&IzquierdaEstado = false
+	&ArribaEstado = false
+	for &SDTLaberintoItem in &SDTLaberinto
+		if &SDTLaberintoItem.PosicionX = &EvaluacionItem.PosicionX and &SDTLaberintoItem.PosicionY = &EvaluacionItem.PosicionY - 1
+			if &SDTLaberintoItem.Tipo = TipoPosicion.SinValor
+				&IzquierdaEstado = true
+			endif
+		endif
+	endfor
+endsub
